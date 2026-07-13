@@ -1,0 +1,19 @@
+{
+  "name": "obscli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tiny CLI for starting and stopping full-screen OBS recordings",
+  "type": "module",
+  "bin": {
+    "obscli": "src/cli.js"
+  },
+  "scripts": {
+    "test": "node --test test/obs-recorder.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "obs-websocket-js": "5.0.8"
+  }
+}
