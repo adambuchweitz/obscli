@@ -22,11 +22,16 @@ npm install
 npm link
 ```
 
-OBS Studio must be running with **Tools > WebSocket Server Settings > Enable
-WebSocket server** turned on. `obscli` discovers the password and port from a
-standard or Scoop OBS installation. You can override discovery with:
+`obscli` starts OBS Studio automatically when it is not already running and
+waits for it to accept commands. Automated launches clear OBS's stale crash
+sentinels so an earlier unclean shutdown cannot leave startup blocked on the
+safe-mode prompt. OBS must have **Tools > WebSocket Server Settings > Enable
+WebSocket server** turned on. `obscli` discovers the executable, password, and
+port from a standard or Scoop OBS installation. You can override discovery
+with:
 
 ```powershell
+$env:OBS_EXECUTABLE = "C:\path\to\obs64.exe"
 $env:OBS_WEBSOCKET_URL = "ws://127.0.0.1:4455"
 $env:OBS_WEBSOCKET_PASSWORD = "your-password"
 ```

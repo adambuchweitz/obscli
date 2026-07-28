@@ -8,7 +8,7 @@
     "obscli": "src/cli.js"
   },
   "scripts": {
-    "test": "node --test test/obs-recorder.test.js"
+    "test": "node --test"
   },
   "engines": {
     "node": ">=20"

@@ -2,6 +2,10 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import OBSWebSocket from "obs-websocket-js";
+import { ensureObsRunning } from "./obs-process.js";
+
+const OBS_STARTUP_TIMEOUT_MS = 30_000;
+const OBS_STARTUP_RETRY_MS = 250;
 
 function configCandidates() {
   return [
@@ -39,8 +43,22 @@ async function readObsWebSocketConfig() {
   return undefined;
 }
 
-export async function connectToObs() {
-  const config = await readObsWebSocketConfig();
+function delay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+export async function connectToObs({
+  ensureRunning = ensureObsRunning,
+  readConfig = readObsWebSocketConfig,
+  createClient = () => new OBSWebSocket(),
+  readyCheck = (obs) => obs.call("GetRecordStatus"),
+  now = Date.now,
+  wait = delay,
+  startupTimeout = OBS_STARTUP_TIMEOUT_MS,
+  startupRetry = OBS_STARTUP_RETRY_MS,
+} = {}) {
+  const { started } = await ensureRunning();
+  const config = await readConfig();
   if (config && !config.server_enabled) {
     throw new Error("OBS WebSocket is disabled; enable it under Tools > WebSocket Server Settings");
   }
@@ -54,7 +72,21 @@ export async function connectToObs() {
     );
   }
 
-  const obs = new OBSWebSocket();
-  await obs.connect(url, password, { eventSubscriptions: 0 });
-  return obs;
+  const deadline = now() + startupTimeout;
+  do {
+    const obs = createClient();
+    try {
+      await obs.connect(url, password, { eventSubscriptions: 0 });
+      await readyCheck(obs);
+      return obs;
+    } catch (error) {
+      if (!started || now() >= deadline) throw error;
+      try {
+        await obs.disconnect();
+      } catch {
+        // The socket may not have connected yet.
+      }
+    }
+    await wait(startupRetry);
+  } while (true);
 }
